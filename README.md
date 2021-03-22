@@ -23,11 +23,15 @@ We will walk you through some simple steps to run inference with our trained wei
 
 2. Download models and an example CT.
     ```bash
-    curl https://body-composition.s3.amazonaws.com/models.tar.gz | tar -x -C .
+    curl https://body-composition.s3.amazonaws.com/models.tar.gz | tar -zx -C .
     ```
 
 3. Install required packages. (or use virtual environment)
     ```bash
+    # Setting up virtual environment (optional)
+    virtualenv -p python3.7 venv
+    source venv/bin/activate
+    # pip install
     pip install -r requirements.txt
     ```
 
