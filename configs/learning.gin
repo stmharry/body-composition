@@ -1,0 +1,10 @@
+TrainSpec.optimizer_cls = @tf.train.AdamOptimizer
+TrainSpec.lr_decay_rate = 0.1
+TrainSpec.weight_decay = 1e-4
+TrainSpec.gradient_clip = 20.0
+
+RunConfig.log_step_count_steps = 10
+RunConfig.save_summary_steps = 1
+RunConfig.save_checkpoints_steps = 100
+RunConfig.keep_checkpoint_max = 5
+RunConfig.keep_checkpoint_every_n_hours = 0.5

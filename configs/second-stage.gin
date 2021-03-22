@@ -1,0 +1,25 @@
+include 'configs/augmentation.gin'
+include 'configs/learning.gin'
+
+Estimator.estimator_cls = @SecondStage
+
+SecondStage.train_augmentation = @train/iaa.Sequential()
+SecondStage.test_augmentation = @test/iaa.Sequential()
+SecondStage.model_cls = @thin.models.ResUNet50
+
+train/iaa.Sequential.children = [
+    @iaa.LinearContrast(),
+    @iaa.Affine(),
+    @iaa.ElasticTransformation(),
+    @iaa.GaussianBlur(),
+    @iaa.Cutout(),
+    @iaa.CropToFixedSize()]
+
+test/iaa.Sequential.children = []
+
+TrainSpec.lr = 1e-4
+TrainSpec.lr_decay_steps = 2_000
+TrainSpec.batch_size = 16
+TrainSpec.max_steps = 6_000
+
+EvalSpec.batch_size = 16

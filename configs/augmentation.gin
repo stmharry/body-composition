@@ -1,0 +1,13 @@
+iaa.LinearContrast.alpha = (0.5, 1.5)
+iaa.Affine.scale = (0.8, 1.2)
+iaa.Affine.rotate = (-10, 10)
+iaa.Affine.shear = (-10, 10)
+iaa.ElasticTransformation.alpha = (0, 100)
+iaa.ElasticTransformation.sigma = 10
+iaa.GaussianBlur.sigma = (0.0, 5.0)
+iaa.Cutout.nb_iterations = 8
+iaa.Cutout.size = 0.1
+iaa.Cutout.fill_mode = 'constant'
+iaa.Cutout.cval = 0
+iaa.CropToFixedSize.height = 448 
+iaa.CropToFixedSize.width = 448
