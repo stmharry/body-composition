@@ -66,7 +66,7 @@ Example outputs are shown as follows:
 The Liver Tumor Segmentation Challenge released [200 CT scans](https://competitions.codalab.org/competitions/17094) in total, from which we select 29 training studies and 12 test studies for annotation.
 To fetch the data, run
 ```bash
-curl https://body-composition.s3.amazonaws.com/data.tar.gz | tar -x -C .
+curl https://body-composition.s3.amazonaws.com/data.tar.gz | tar -zx -C .
 ```
 
 In `data/studies`, you can find raw studies (in NIFTI `.nii.gz` format) that we have annotated, and in `data/masks`, the per-pixel annotation (also in NIFTI format).
