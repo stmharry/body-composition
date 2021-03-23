@@ -1,7 +1,10 @@
 # Body Composition Assessment Dataset
 
-This repository contains the data and code for the work *"Artificial Intelligence to Assess Body Composition on Routine Abdominal CT Scans and Predict Mortality in Pancreatic Cancer – A Recipe for Your Local Application"* in *European Journal of Radiology*.
-Overall, we annotate 41 studies from the publicly available [LiTS Dataset](https://competitions.codalab.org/competitions/17094) on slices at the level of L3 vertebrae, and learn models to automatically assess body composition.
+This repository contains the data and code for the works
+- "Artificial Intelligence to Assess Body Composition on Routine Abdominal CT Scans and Predict Mortality in Pancreatic Cancer – A Recipe for Your Local Application", *European Journal of Radiology* (2021)
+- "Fully Automated AI Body Composition Quantification from Abdominal CT Scans - Training Data, Model Code and Trained Weights", *Data in Brief* (2021)
+
+Overall, we annotate 40 studies from the publicly available [LiTS Dataset](https://competitions.codalab.org/competitions/17094) on slices at the level of L3 vertebrae, and learn models to automatically assess body composition.
 
 <img src="assets/0029.jpg" width="800px"/>
 
