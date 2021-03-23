@@ -29,15 +29,14 @@ We will walk you through some simple steps to run inference with our trained wei
 3. Install required packages. (or use virtual environment)
     ```bash
     # Setting up virtual environment (optional)
-    virtualenv -p python3.7 venv
-    source venv/bin/activate
+    virtualenv -p python3.7 venv && source venv/bin/activate
     # pip install
     pip install -r requirements.txt
     ```
 
 4. Run the model prediction on the example CT and collect outputs at `./results`.
     ```bash
-    ./predict.sh
+    ./scripts/predict.sh
     ```
 
 By this point, you should expect a new directory `results` with this file hierarchy:
@@ -94,7 +93,7 @@ To prepare data for training, it is one more step than placing the files in `dat
 In files `data/splits/first/{train,eval}.txt` you should add the names of your study depending on the data split you wish to put them into. 
 These two files are for training/evaluating the first stage, and the same process goes similarly for the second stage where you would modify `data/splits/second/{train,eval}.txt`.
 
-To kick off training with the new training splits, run the following commands:
+To kick off training with the new training splits, run the following commands to train two stages respectively:
 
 ```bash
 # Training the first stage
