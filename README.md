@@ -26,7 +26,10 @@ We will walk you through some simple steps to run inference with our trained wei
 
 2. Download models and an example CT.
     ```bash
+    # Copy and paste this command to your command line
     curl https://body-composition.s3.amazonaws.com/models.tar.gz | tar -zx -C .
+    # or if you feel lazy, use the pre-packed command
+    make pull-model
     ```
 
 3. Install required packages. (or use virtual environment)
@@ -39,7 +42,7 @@ We will walk you through some simple steps to run inference with our trained wei
 
 4. Run the model prediction on the example CT and collect outputs at `./results`.
     ```bash
-    ./scripts/predict.sh
+    make STAGE=first && make STAGE=second
     ```
 
 By this point, you should expect a new directory `results` with this file hierarchy:
@@ -72,7 +75,10 @@ Example outputs are shown as follows:
 The Liver Tumor Segmentation Challenge released [200 CT scans](https://competitions.codalab.org/competitions/17094) in total, from which we select 29 training studies and 12 test studies for annotation.
 To fetch the data, run
 ```bash
+# Copy and paste this command to your command line
 curl https://body-composition.s3.amazonaws.com/data.tar.gz | tar -zx -C .
+# or if you feel lazy, use the pre-packed command
+make pull-data
 ```
 
 In `data/studies`, you can find raw studies (in NIFTI `.nii.gz` format) that we have annotated, and in `data/masks`, the per-pixel annotation (also in NIFTI format).
@@ -100,9 +106,9 @@ To kick off training with the new training splits, run the following commands to
 
 ```bash
 # Training the first stage
-python main.py --do train_eval --root_dir . --gin_file configs/first-stage.gin
+make DO=train_eval STAGE=first
 # Training the second stage
-python main.py --do train_eval --root_dir . --gin_file configs/second-stage.gin
+make DO=train_eval STAGE=second
 ```
 
 New models will be saved in `models/<some-fancy-timestamp>`, and you can use `tensorboard` to monitor the training process with `tensorboard --logdir models`.

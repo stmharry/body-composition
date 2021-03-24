@@ -82,16 +82,21 @@ class InputFn(object):
     def tfrecord_dir_root(self):
         return os.path.join(self.data_dir, 'tfrecords')
 
-    def _write_tfrecord(self, tfrecord, tfrecord_path):
+    def _write_tfrecord(self, tfrecords, tfrecord_path):
+        if not isinstance(tfrecords, list):
+            tfrecords = [tfrecords]
+
         writer = tf.io.TFRecordWriter(tfrecord_path)
-        feature = {
-            key: ndarray_feature(value)
-            for (key, value) in tfrecord.items()}
+        for (num, tfrecord) in enumerate(tfrecords):
+            feature = {
+                key: ndarray_feature(value)
+                for (key, value) in tfrecord.items()}
 
-        logging.info(f'Caching features {list(feature)} to {tfrecord_path}')
+            if num == 0:
+                logging.info(f'Caching features {list(feature)} to {tfrecord_path}')
 
-        example = tf.train.Example(features=tf.train.Features(feature=feature))
-        writer.write(example.SerializeToString())
+            example = tf.train.Example(features=tf.train.Features(feature=feature))
+            writer.write(example.SerializeToString())
 
     def _dataset_from_df(self, df, training):
         dataset = tf.data.Dataset.range(len(df))

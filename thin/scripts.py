@@ -29,7 +29,7 @@ def with_output(name, dtype=None, shape=None):
 
 
 def _as_func(is_numpy=None, is_tf=None):
-    def _as_func_decorator(f, include_inputs, *args, **kwargs):
+    def _as_func_decorator(f, include_inputs=False, *args, **kwargs):
         f_partial = functools.partial(f, *args, **kwargs)
 
         def _f(inputs):

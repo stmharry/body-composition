@@ -30,7 +30,6 @@ from thin.scripts import as_tensorflow_func
 from thin.scripts import with_input
 from thin.scripts import with_output
 from thin.utils import maybe_decode
-from thin.utils import ndarray_feature
 
 flags.DEFINE_string(
     'predict_path', None, 'Path to find studies for prediction.')
@@ -89,7 +88,9 @@ class InputFn(estimator.InputFn):
     @with_input('image_path')
     @with_input('mask_path', dtype=tf.string, default='')
     @with_output('name', dtype=tf.string, shape=())
-    @with_output('image', dtype=tf.float32, shape=np.r_[None, image_shape, image_channels])
+    @with_output('image',
+                 dtype=tf.float32,
+                 shape=np.r_[None, image_shape, image_channels])
     @with_output('mask', dtype=tf.int64, shape=np.r_[None, image_shape])
     @with_output('dim', dtype=tf.float32, shape=(3,))
     @with_output('shape', dtype=tf.int64, shape=(3,))
@@ -122,7 +123,9 @@ class InputFn(estimator.InputFn):
 
             if np.sum(mask_l3_z != 0) > 1:
                 indices_l3 = np.argwhere(mask_l3_z).flatten()
-                logging.warning(f'More than one slice with annotations: {indices_l3}. Using {index_l3}.')
+                logging.warning((
+                    f'More than one slice with annotations: {indices_l3}. '
+                    f'Using {index_l3}.'))
 
         else:
             mask = np.zeros(
@@ -133,6 +136,8 @@ class InputFn(estimator.InputFn):
         return (name, image, mask, dim, shape, affine, index_l3)
 
     def _write_tfrecord(self, study, tfrecord_path):
+        logging.info(f'Caching TFRecord into {tfrecord_path}')
+
         if self.parse_study_as_batch:
             tfrecords = [
                 dict(zip(study.keys(), values))
@@ -140,7 +145,8 @@ class InputFn(estimator.InputFn):
         else:
             tfrecords = [study]
 
-        super()._write_tfrecord(tfrecords=tfrecords, tfrecord_path=tfrecord_path)
+        super()._write_tfrecord(
+            tfrecords=tfrecords, tfrecord_path=tfrecord_path)
 
     @with_input('image', dtype=tf.float32)
     @with_input('mask', dtype=np.int64, default=())
@@ -190,7 +196,8 @@ class InputFn(estimator.InputFn):
             os.makedirs(self.tfrecord_dir)
 
         tfrecord_paths = []
-        for study_name in tqdm.tqdm(study_names, desc='Loading tfrecord files'):
+        for study_name in tqdm.tqdm(
+                study_names, desc='Loading tfrecord files'):
             tfrecord_path = self.tfrecord_path(study_name)
             tfrecord_paths.append(tfrecord_path)
 
@@ -202,7 +209,6 @@ class InputFn(estimator.InputFn):
                 'image_path': self.image_path(study_name),
                 'mask_path': self.mask_path(study_name)})
 
-            logging.info(f'Caching TFRecord into {tfrecord_path}')
             self._write_tfrecord(study, tfrecord_path)
 
         dataset = tf.data.Dataset.from_tensor_slices(tfrecord_paths)
@@ -224,13 +230,12 @@ class InputFn(estimator.InputFn):
             num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
         if self.resample_key and training:
+            class_func = lambda features, labels: labels[self.resample_key]
+            target_dist = np.full(
+                (self.num_classes,), 1 / self.num_classes, dtype=np.float32)
             dataset = dataset.apply(
                 tf.data.experimental.rejection_resample(
-                    class_func=lambda features, labels: labels[self.resample_key],
-                    target_dist=np.full(
-                        (self.num_classes,),
-                        1 / self.num_classes,
-                        dtype=np.float32)))
+                    class_func=class_func, target_dist=target_dist))
             dataset = dataset.map(lambda label, example: example)
 
         dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
@@ -306,7 +311,9 @@ class FirstStage(InputFn, estimator.Estimator):
     @with_output('image_path', dtype=tf.string, shape=(None,))
     @with_output('mask_path', dtype=tf.string, shape=(None,))
     @with_output('name', dtype=tf.string, shape=(None,))
-    @with_output('image', dtype=tf.float32, shape=np.r_[None, InputFn.image_shape, InputFn.image_channels])
+    @with_output('image',
+                 dtype=tf.float32,
+                 shape=np.r_[None, InputFn.image_shape, InputFn.image_channels])
     @with_output('dim', dtype=tf.float32, shape=(None, 3))
     @with_output('shape', dtype=tf.int64, shape=(None, 2))
     @with_output('affine', dtype=tf.float32, shape=(None, 4, 4))
@@ -409,7 +416,8 @@ class FirstStage(InputFn, estimator.Estimator):
 
             z1 = np.arange(0, z_size, step=1.0)
             _prob1 = sigmoid(_logit[:, 1] - _logit[:, 0])
-            f = scipy.interpolate.interp1d(z1, _prob1, fill_value='extrapolate')
+            f = scipy.interpolate.interp1d(
+                z1, _prob1, fill_value='extrapolate')
 
             # interpolate w.r.t. z
             z2 = np.arange(0, z_size, step=self.z_dim_interp / z_dim)
@@ -432,18 +440,21 @@ class FirstStage(InputFn, estimator.Estimator):
             t_edge = np.r_[-self.t_dim, t] + self.t_dim / 2
 
             _arr = -(z3[None, :] - z0[:, None]) / np.log(1 / _prob3 - 1)
-            _hist = np.stack(np.apply_along_axis(np.histogram, axis=1, arr=_arr, bins=t_edge)[:, 0])
+            _hist = np.stack(np.apply_along_axis(
+                np.histogram, axis=1, arr=_arr, bins=t_edge)[:, 0])
             _hist = _hist + 1e-5 * np.random.uniform(size=_hist.shape)  # to avoid equal-heighted peaks
             _hist = scipy.ndimage.gaussian_filter(
                 _hist, sigma=(self.sigma / z_dim / self.z_step, 5))
             _hist_max = scipy.ndimage.maximum_filter(
-                _hist, size=(int(self.z_dim_filter / z_dim / self.z_step), len(t)))
+                _hist, size=(
+                    int(self.z_dim_filter / z_dim / self.z_step), len(t)))
 
             # find the local maximums
             _index = np.nonzero(_hist == _hist_max)
             # only keep top k non-zero local maximums
             _index_topk = np.argsort(-_hist[_index])[:self.topk]
-            _index_topk = _index_topk[_hist[_index][_index_topk] > _hist_max.max() * self.hist_thresh]
+            _index_topk = _index_topk[
+                _hist[_index][_index_topk] > _hist_max.max() * self.hist_thresh]
 
             (_index_l3, _t_index) = [_i[_index_topk] for _i in _index]
             _z0_topk = z0[_index_l3]
@@ -477,7 +488,8 @@ class FirstStage(InputFn, estimator.Estimator):
                 nrows=1, ncols=3, figsize=(10, 6),
                 gridspec_kw={'width_ratios': [2.5, 0.75, 0.75]})
             ax = axes[0]
-            ax.imshow(image[:, ::-1, 256], cmap='bone', aspect='auto', origin='lower')
+            ax.imshow(
+                image[:, ::-1, 256], cmap='bone', aspect='auto', origin='lower')
             for (num, (_z0, _h)) in enumerate(zip(_z0_topk, _h_topk)):
                 ax.axhline(_z0, c=cmap(num))
                 ax.text(
@@ -530,7 +542,8 @@ class FirstStage(InputFn, estimator.Estimator):
         df_out = pd.DataFrame(df_out)
         paths = df_out.pop('path').drop_duplicates().tolist()
         df_out.to_csv(
-            os.path.join(result_dir, 'stat.csv'), float_format='%.2f', index=False)
+            os.path.join(result_dir, 'stat.csv'),
+            float_format='%.2f', index=False)
 
         pdfcombine.combine(paths, os.path.join(result_dir, 'all.pdf'))
 
@@ -548,7 +561,9 @@ class SecondStage(InputFn, estimator.Estimator):
     @with_input('image_path')
     @with_input('mask_path', dtype=tf.string, default='')
     @with_output('name', dtype=tf.string, shape=())
-    @with_output('image', dtype=tf.float32, shape=InputFn.image_shape + (InputFn.image_channels,))
+    @with_output('image',
+                 dtype=tf.float32,
+                 shape=InputFn.image_shape + (InputFn.image_channels,))
     @with_output('mask', dtype=tf.int64, shape=InputFn.image_shape)
     @with_output('dim', dtype=tf.float32, shape=(3,))
     @with_output('shape', dtype=tf.int64, shape=(2,))
@@ -632,7 +647,6 @@ class SecondStage(InputFn, estimator.Estimator):
             study_name = maybe_decode(item['name'])
 
             image = item.raw_image
-            logit = item.logit
             shape = item['shape']
             affine = item.affine
             image = np.expand_dims(item.image, axis=0).squeeze(axis=-1)
@@ -644,7 +658,8 @@ class SecondStage(InputFn, estimator.Estimator):
             _image = mask.astype(np.uint8).transpose(2, 1, 0)
             _affine = affine[np.ix_([2, 1, 0, 3], [2, 1, 0, 3])]
             _image_nib = nib.Nifti1Image(_image, affine=_affine)
-            nib.save(_image_nib, os.path.join(result_dir, f'{study_name}.nii.gz'))
+            nib.save(
+                _image_nib, os.path.join(result_dir, f'{study_name}.nii.gz'))
 
             _area = np.prod(_image_nib.header.get_zooms()[:2]) / 100
             area = np.bincount(mask.flatten(), minlength=4) * _area
@@ -707,7 +722,8 @@ if __name__ == '__main__':
     warnings.filterwarnings('ignore')
 
     for (iaa_object_name, iaa_object) in iaa.__dict__.items():
-        if isinstance(iaa_object, type) and issubclass(iaa_object, iaa.Augmenter):
+        if (isinstance(iaa_object, type) and
+                issubclass(iaa_object, iaa.Augmenter)):
             gin.external_configurable(iaa_object, module='iaa')
 
     app.run(main)
