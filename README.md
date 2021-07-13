@@ -36,6 +36,8 @@ We will walk you through some simple steps to run inference with our trained wei
     ```bash
     # Setting up virtual environment (optional)
     virtualenv -p python3.7 venv && source venv/bin/activate
+    # or if you are using conda
+    conda create -n venv python=3.7 && conda activate venv && conda install pip
     # pip install
     pip install -r requirements.txt
     ```
