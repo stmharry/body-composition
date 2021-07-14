@@ -7,6 +7,8 @@ PY ?= \
     CUDA_VISIBLE_DEVICES=$(CUDA_VISIBLE_DEVICES) \
     TF_CPP_MIN_LOG_LEVEL=$(TF_CPP_MIN_LOG_LEVEL) \
     python
+
+PYTHONPATH := .:$(PYTHONPATH)
 CURL = curl
 TAR = tar -zx -C .
 
